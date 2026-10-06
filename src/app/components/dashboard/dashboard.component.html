@@ -60,5 +60,44 @@
         <pre class="console-output">{{ apiResponse() }}</pre>
       </div>
     </div>
+
+    <!-- Encrypted Session Claims Card -->
+    <div class="card claims-card">
+      <h3>🔑 Stored Session Claims & Individual Data</h3>
+      <p class="description">
+        Demonstrating dual storage: Name is stored <strong>both plain and encrypted</strong> in <code>sessionStorage</code>, along with role, nameidentifier, and full claims.
+      </p>
+
+      <div class="claims-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 0.75rem; color: #a0aec0; text-transform: uppercase;">Direct Plain Name:</div>
+          <div style="font-size: 1.1rem; font-weight: 600; color: #48bb78; font-family: monospace;">{{ authService.getUserNamePlain() }}</div>
+          <small style="color: #718096;">Key: <code>username_plain</code></small>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 0.75rem; color: #a0aec0; text-transform: uppercase;">Encrypted Name:</div>
+          <div style="font-size: 1.1rem; font-weight: 600; color: #63b3ed; font-family: monospace;">{{ authService.getUserNameEncrypted() }}</div>
+          <small style="color: #718096;">Key: <code>username_encrypted</code></small>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 0.75rem; color: #a0aec0; text-transform: uppercase;">User Role:</div>
+          <div style="font-size: 1.1rem; font-weight: 600; color: #ed8936; font-family: monospace;">{{ authService.getUserRole() }}</div>
+          <small style="color: #718096;">Key: <code>user_role</code></small>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 0.75rem; color: #a0aec0; text-transform: uppercase;">Name Identifier:</div>
+          <div style="font-size: 1.1rem; font-weight: 600; color: #9f7aea; font-family: monospace;">{{ authService.getNameIdentifier() }}</div>
+          <small style="color: #718096;">Key: <code>user_nameidentifier</code></small>
+        </div>
+      </div>
+
+      <div class="console-box success">
+        <div class="console-header">Decrypted Full Claims from Storage (Key: <code>auth_jwt_claims</code>)</div>
+        <pre class="console-output">{{ authService.currentClaims() | json }}</pre>
+      </div>
+    </div>
   </main>
 </div>

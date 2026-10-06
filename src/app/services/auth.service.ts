@@ -13,12 +13,19 @@ export class AuthService {
   private readonly storage = inject(StorageService);
 
   private readonly TOKEN_KEY = 'auth_jwt_token';
+  private readonly CLAIMS_KEY = 'auth_jwt_claims';
+  private readonly USER_NAME_PLAIN_KEY = 'username_plain';
+  private readonly USER_NAME_ENCRYPTED_KEY = 'username_encrypted';
+  private readonly USER_ROLE_KEY = 'user_role';
+  private readonly USER_NAMEID_KEY = 'user_nameidentifier';
+
   private timerInterval: any = null;    //  Holds the reference to JavaScript's setInterval()
                                         // This will hold the interval ID for the token expiry timer, allowing us to clear it when needed.
 
   // Reactive state signals
   readonly isLoggedIn = signal<boolean>(false);
-  readonly currentUser = signal<{ username: string; role: string } | null>(null);
+  readonly currentUser = signal<{ username: string; role: string; nameIdentifier?: string } | null>(null);
+  readonly currentClaims = signal<DecodedToken | null>(null);
   readonly tokenRemainingSeconds = signal<number>(0);
   readonly showExpiryWarning = signal<boolean>(false);
 
@@ -55,8 +62,15 @@ export class AuthService {
   logout(reload: boolean = false): void {
     this.stopTokenTimer();
     this.storage.removeItem(this.TOKEN_KEY);
+    this.storage.removeItem(this.CLAIMS_KEY);
+    sessionStorage.removeItem(this.USER_NAME_PLAIN_KEY);
+    this.storage.removeItem(this.USER_NAME_ENCRYPTED_KEY);
+    this.storage.removeItem(this.USER_ROLE_KEY);
+    this.storage.removeItem(this.USER_NAMEID_KEY);
+
     this.isLoggedIn.set(false);
     this.currentUser.set(null);
+    this.currentClaims.set(null);
     this.tokenRemainingSeconds.set(0);
     this.showExpiryWarning.set(false);
 
@@ -73,6 +87,47 @@ export class AuthService {
    */
   getToken(): string | null {
     return this.storage.getItem(this.TOKEN_KEY);
+  }
+
+  /**
+   * Get decrypted claims from session storage
+   */
+  getClaims(): DecodedToken | null {
+    const claimsJson = this.storage.getItem(this.CLAIMS_KEY);
+    if (!claimsJson) return null;
+    try {
+      return JSON.parse(claimsJson);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get plain username stored directly in sessionStorage
+   */
+  getUserNamePlain(): string | null {
+    return sessionStorage.getItem(this.USER_NAME_PLAIN_KEY);
+  }
+
+  /**
+   * Get decrypted username from sessionStorage
+   */
+  getUserNameEncrypted(): string | null {
+    return this.storage.getItem(this.USER_NAME_ENCRYPTED_KEY);
+  }
+
+  /**
+   * Get decrypted role from sessionStorage
+   */
+  getUserRole(): string | null {
+    return this.storage.getItem(this.USER_ROLE_KEY);
+  }
+
+  /**
+   * Get decrypted nameidentifier from sessionStorage
+   */
+  getNameIdentifier(): string | null {
+    return this.storage.getItem(this.USER_NAMEID_KEY);
   }
 
   /**
@@ -105,7 +160,29 @@ export class AuthService {
         decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
         'User';
 
-      this.currentUser.set({ username, role });
+      const nameIdentifier =
+        decoded.nameid ||
+        decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+        decoded['sub'] ||
+        username;
+
+      // 1. Full decoded claims stored encrypted
+      this.storage.setItem(this.CLAIMS_KEY, JSON.stringify(decoded));
+      this.currentClaims.set(decoded);
+
+      // 2. Name stored directly as plain text (e.g. "sathya")
+      sessionStorage.setItem(this.USER_NAME_PLAIN_KEY, username);
+
+      // 3. Name stored encrypted using StorageService
+      this.storage.setItem(this.USER_NAME_ENCRYPTED_KEY, username);
+
+      // 4. Role stored encrypted using StorageService
+      this.storage.setItem(this.USER_ROLE_KEY, role);
+
+      // 5. NameIdentifier stored encrypted using StorageService
+      this.storage.setItem(this.USER_NAMEID_KEY, nameIdentifier);
+
+      this.currentUser.set({ username, role, nameIdentifier });
       this.isLoggedIn.set(true);
       this.showExpiryWarning.set(false);
 
@@ -131,7 +208,21 @@ export class AuthService {
           decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
           'User';
 
-        this.currentUser.set({ username, role });
+        const nameIdentifier =
+          decoded.nameid ||
+          decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+          decoded['sub'] ||
+          username;
+
+        // Ensure all sessionStorage items are synced
+        this.storage.setItem(this.CLAIMS_KEY, JSON.stringify(decoded));
+        sessionStorage.setItem(this.USER_NAME_PLAIN_KEY, username);
+        this.storage.setItem(this.USER_NAME_ENCRYPTED_KEY, username);
+        this.storage.setItem(this.USER_ROLE_KEY, role);
+        this.storage.setItem(this.USER_NAMEID_KEY, nameIdentifier);
+
+        this.currentClaims.set(decoded);
+        this.currentUser.set({ username, role, nameIdentifier });
         this.isLoggedIn.set(true);
         this.startTokenTimer(decoded.exp);
       } else {
