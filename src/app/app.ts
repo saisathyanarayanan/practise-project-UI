@@ -1,6 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { TestApiService } from './services/test-api.service';
+import { Component, inject } from '@angular/core';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -9,19 +8,15 @@ import { TestApiService } from './services/test-api.service';
   styleUrl: './app.scss'
 })
 export class App {
-  protected readonly title = signal('UI');
+  readonly authService = inject(AuthService);
 
-  private readonly testApi = inject(TestApiService);
-
-  protected readonly apiResult = signal('Not called yet');
-  protected readonly apiError = signal('');
-
-  protected loadMethodOne(): void {
-    this.apiError.set('');
-    this.testApi.getMethodOne().subscribe({
-      next: (value) => this.apiResult.set(value),
-      error: (err: HttpErrorResponse) => {
-        this.apiError.set(`${err.status || 'network'} — ${err.message}`);
+  extendSession(): void {
+    this.authService.refreshToken().subscribe({
+      next: () => {
+        console.log('Session extended successfully');
+      },
+      error: (err) => {
+        console.error('Failed to extend session', err);
       }
     });
   }

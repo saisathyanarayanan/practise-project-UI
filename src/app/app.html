@@ -1,14 +1,22 @@
-<main class="page">
-  <h1>{{ title() }}</h1>
-  <p>Component → service → constants → API</p>
+<!-- Global Session Expiry Warning Banner (Triggers when token has < 20s remaining) -->
+@if (authService.showExpiryWarning()) {
+  <aside class="expiry-warning-banner" role="alert" aria-live="assertive">
+    <div class="banner-content">
+      <div class="warning-text">
+        <span class="warning-icon">⚠️</span>
+        <span>
+          <strong>Your session will expire in {{ authService.tokenRemainingSeconds() }} seconds!</strong>
+          Click below to keep your work going without any interruption.
+        </span>
+      </div>
 
-  <button type="button" (click)="loadMethodOne()">Call method-one</button>
+      <button type="button" class="btn-extend-session" (click)="extendSession()">
+        🔄 Keep My Session Active
+      </button>
+    </div>
+  </aside>
+}
 
-  <p><strong>Result:</strong> {{ apiResult() }}</p>
-
-  @if (apiError()) {
-    <p class="error">{{ apiError() }}</p>
-  }
-</main>
-
-<router-outlet />
+<div class="app-layout">
+  <router-outlet></router-outlet>
+</div>

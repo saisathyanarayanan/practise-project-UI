@@ -1,0 +1,248 @@
+.dashboard-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 2rem;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #0f172a;
+    }
+
+    .secure-badge {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+
+  .user-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .username {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.95rem;
+      }
+
+      .role-tag {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    .btn-logout {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      padding: 0.5rem 0.9rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #fca5a5;
+      }
+    }
+  }
+}
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    color: #1e293b;
+    font-size: 1.2rem;
+  }
+
+  .description {
+    margin: 0 0 1.2rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+
+    code {
+      background: #f1f5f9;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      color: #0f172a;
+      font-weight: 600;
+    }
+  }
+}
+
+.timer-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+
+  .timer-label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+
+  .timer-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #2563eb;
+    font-family: monospace;
+  }
+
+  &.warning {
+    background: #fffbeb;
+    border-color: #f59e0b;
+
+    .timer-value {
+      color: #b45309;
+      animation: pulse 1s infinite alternate;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .btn-secondary {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #e2e8f0;
+    }
+  }
+
+  .refresh-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #059669;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+
+  .btn-action {
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+    padding: 0.7rem 1.1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #2563eb;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+    }
+  }
+}
+
+.console-box {
+  background: #0f172a;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #334155;
+
+  .console-header {
+    background: #1e293b;
+    color: #94a3b8;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .console-output {
+    margin: 0;
+    padding: 1rem;
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  &.success .console-output {
+    color: #4ade80;
+  }
+
+  &.error .console-output {
+    color: #f87171;
+  }
+}

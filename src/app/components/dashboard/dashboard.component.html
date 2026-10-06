@@ -1,0 +1,64 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="brand">
+      <h2>🛡️ App Dashboard</h2>
+      <span class="secure-badge">JWT Protected</span>
+    </div>
+
+    <div class="user-controls">
+      <div class="user-info">
+        <span class="username">{{ authService.currentUser()?.username }}</span>
+        <span class="role-tag">{{ authService.currentUser()?.role }}</span>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-content">
+    <!-- Session Status Card -->
+    <div class="card session-card">
+      <h3>⏱️ Live Session & JWT Status</h3>
+      <p class="description">
+        Token lifetime is set to <strong>5 minute</strong> on the API. When remaining time is <strong>&lt; 20 seconds</strong>,
+        a warning appears allowing you to extend the session.
+      </p>
+
+      <div class="timer-box" [class.warning]="authService.tokenRemainingSeconds() <= 20">
+        <span class="timer-label">Token Expiration Countdown:</span>
+        <span class="timer-value">{{ authService.tokenRemainingSeconds() }} seconds</span>
+      </div>
+
+      <div class="session-actions">
+        <button type="button" class="btn-secondary" (click)="manualRefreshToken()">
+          🔄 Extend Session (Refresh Token)
+        </button>
+        @if (refreshMessage()) {
+          <span class="refresh-status">{{ refreshMessage() }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- API Protected Endpoints Test Card -->
+    <div class="card api-test-card">
+      <h3>🚀 Test Protected API Calls</h3>
+      <p class="description">
+        Both endpoints have <code>[Authorize]</code> on the API. The <code>AuthInterceptor</code> automatically adds the
+        <code>Authorization: Bearer &lt;token&gt;</code> header to each request.
+      </p>
+
+      <div class="action-buttons">
+        <button type="button" class="btn-action" (click)="callMethodOne()">
+          Call <code>/api/test/method-one</code>
+        </button>
+        <button type="button" class="btn-action" (click)="callMethodTwo()">
+          Call <code>/api/test/method-two</code>
+        </button>
+      </div>
+
+      <div class="console-box" [class]="apiStatus()">
+        <div class="console-header">API Response Console</div>
+        <pre class="console-output">{{ apiResponse() }}</pre>
+      </div>
+    </div>
+  </main>
+</div>

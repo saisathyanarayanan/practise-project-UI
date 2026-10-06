@@ -1,0 +1,66 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="card-header">
+      <div class="lock-icon">🔒</div>
+      <h2>Secure Authentication</h2>
+      <p class="subtitle">Enter credentials to authenticate with ASP.NET Core API</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+          placeholder="Enter username"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          placeholder="Enter password"
+          required
+        />
+      </div>
+
+      <button type="submit" [disabled]="isLoading()" class="btn-primary">
+        @if (isLoading()) {
+          <span>Authenticating...</span>
+        } @else {
+          <span>Sign In</span>
+        }
+      </button>
+    </form>
+
+    <div class="test-users-section">
+      <span class="hint-label">Quick Test Logins (from DB):</span>
+      <div class="user-chips">
+        <button type="button" class="chip" (click)="fillUser('sathya', 'pass123')">
+          👤 sathya (User)
+        </button>
+        <button type="button" class="chip" (click)="fillUser('admin', 'admin123')">
+          👑 admin (Admin)
+        </button>
+        <button type="button" class="chip" (click)="fillUser('testuser', 'test@456')">
+          🧪 testuser (User)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
