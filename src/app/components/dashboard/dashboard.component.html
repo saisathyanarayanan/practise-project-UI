@@ -55,6 +55,26 @@
         </button>
       </div>
 
+      <!-- YARP Gateway Microservices Test -->
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.15);">
+        <h4 style="margin: 0 0 8px 0; color: #63b3ed; font-size: 1rem;">🌐 Test YARP Gateway (Port 7231 ➔ Multiple Microservices)</h4>
+        <p class="description">
+          All buttons below send requests to <code>http://localhost:7231</code>. YARP invisibly forwards them to port 5012 or 7014!
+        </p>
+
+        <div class="action-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+          <button type="button" class="btn-action" style="background: #2b6cb0;" (click)="testPrimaryApi()">
+            🏢 Primary API (Port 5012)
+          </button>
+          <button type="button" class="btn-action" style="background: #2c7a7b;" (click)="testTimeOfficeStatus()">
+            ⏱️ TimeOffice Status (Port 7014)
+          </button>
+          <button type="button" class="btn-action" style="background: #285e61;" (click)="testTimeOfficeAttendance()">
+            👥 TimeOffice Attendance (Port 7014)
+          </button>
+        </div>
+      </div>
+
       <div class="console-box" [class]="apiStatus()">
         <div class="console-header">API Response Console</div>
         <pre class="console-output">{{ apiResponse() }}</pre>

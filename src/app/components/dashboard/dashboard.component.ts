@@ -49,6 +49,54 @@ export class DashboardComponent {
     });
   }
 
+  testPrimaryApi(): void {
+    this.apiStatus.set('loading');
+    this.apiResponse.set('Requesting Primary API via Gateway: http://localhost:7231/api/Department/test ...');
+
+    this.testApi.getDepartmentTest().subscribe({
+      next: (res) => {
+        this.apiStatus.set('success');
+        this.apiResponse.set(`✅ [Gateway 7231 ➔ Primary API 5012]:\n` + JSON.stringify(res, null, 2));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.apiStatus.set('error');
+        this.apiResponse.set(`❌ Gateway Error (${err.status}): ${err.message}`);
+      }
+    });
+  }
+
+  testTimeOfficeStatus(): void {
+    this.apiStatus.set('loading');
+    this.apiResponse.set('Requesting TimeOffice via Gateway: http://localhost:7231/api/timeoffice/status ...');
+
+    this.testApi.getTimeOfficeStatus().subscribe({
+      next: (res) => {
+        this.apiStatus.set('success');
+        this.apiResponse.set(`✅ [Gateway 7231 ➔ TimeOffice API 7014]:\n` + JSON.stringify(res, null, 2));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.apiStatus.set('error');
+        this.apiResponse.set(`❌ Gateway Error (${err.status}): ${err.message}`);
+      }
+    });
+  }
+
+  testTimeOfficeAttendance(): void {
+    this.apiStatus.set('loading');
+    this.apiResponse.set('Requesting Attendance via Gateway: http://localhost:7231/api/timeoffice ...');
+
+    this.testApi.getTimeOfficeAttendance().subscribe({
+      next: (res) => {
+        this.apiStatus.set('success');
+        this.apiResponse.set(`✅ [Gateway 7231 ➔ TimeOffice API 7014 (Attendance Data)]:\n` + JSON.stringify(res, null, 2));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.apiStatus.set('error');
+        this.apiResponse.set(`❌ Gateway Error (${err.status}): ${err.message}`);
+      }
+    });
+  }
+
   manualRefreshToken(): void {
     this.refreshMessage.set('Refreshing token...');
     this.authService.refreshToken().subscribe({

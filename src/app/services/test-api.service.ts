@@ -14,4 +14,16 @@ export class TestApiService {
   getMethodTwo(): Observable<string> {
     return this.http.get(API_ENDPOINTS.test.methodTwo, { responseType: 'text' });
   }
+
+  getDepartmentTest(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.test.departmentTest);
+  }
+
+  getTimeOfficeStatus(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.timeoffice.status);
+  }
+
+  getTimeOfficeAttendance(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.timeoffice.attendance);
+  }
 }
