@@ -73,6 +73,24 @@
             👥 TimeOffice Attendance (Port 7014)
           </button>
         </div>
+
+        <!-- EF Core & LINQ Queries Test -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dotted rgba(255,255,255,0.1);">
+          <div style="font-size: 0.85rem; color: #68d391; font-weight: 600; margin-bottom: 8px;">
+            📊 Test EF Core & LINQ Queries (DbSet&lt;Employee&gt;):
+          </div>
+          <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+            <button type="button" class="btn-action" style="background: #276749;" (click)="testEmployeesLinq()">
+              👔 LINQ: All Employees (.OrderBy)
+            </button>
+            <button type="button" class="btn-action" style="background: #22543d;" (click)="testEmployeesLinq('IT')">
+              💻 LINQ: Filter .Where(Dept == 'IT')
+            </button>
+            <button type="button" class="btn-action" style="background: #744210;" (click)="testEmployeeSummary()">
+              📈 LINQ: .GroupBy & Avg Salary
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="console-box" [class]="apiStatus()">

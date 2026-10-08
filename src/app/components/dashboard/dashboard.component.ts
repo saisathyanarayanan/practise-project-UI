@@ -97,6 +97,39 @@ export class DashboardComponent {
     });
   }
 
+  testEmployeesLinq(dept?: string): void {
+    this.apiStatus.set('loading');
+    const filterInfo = dept ? ` (Filtered by LINQ: Department='${dept}')` : ' (All Employees via LINQ OrderBy)';
+    this.apiResponse.set(`Requesting EF Core LINQ Query via Gateway: http://localhost:7231/api/Employee${dept ? '?department=' + dept : ''} ...`);
+
+    this.testApi.getEmployees(dept).subscribe({
+      next: (res) => {
+        this.apiStatus.set('success');
+        this.apiResponse.set(`✅ [Gateway 7231 ➔ EF Core LINQ${filterInfo}]:\n` + JSON.stringify(res, null, 2));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.apiStatus.set('error');
+        this.apiResponse.set(`❌ Error (${err.status}): ${err.message}`);
+      }
+    });
+  }
+
+  testEmployeeSummary(): void {
+    this.apiStatus.set('loading');
+    this.apiResponse.set('Requesting LINQ GroupBy & Average Salary via Gateway: http://localhost:7231/api/Employee/summary ...');
+
+    this.testApi.getEmployeeSummary().subscribe({
+      next: (res) => {
+        this.apiStatus.set('success');
+        this.apiResponse.set(`✅ [Gateway 7231 ➔ LINQ GroupBy & Aggregations]:\n` + JSON.stringify(res, null, 2));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.apiStatus.set('error');
+        this.apiResponse.set(`❌ Error (${err.status}): ${err.message}`);
+      }
+    });
+  }
+
   manualRefreshToken(): void {
     this.refreshMessage.set('Refreshing token...');
     this.authService.refreshToken().subscribe({

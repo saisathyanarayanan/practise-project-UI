@@ -12,6 +12,10 @@ export const API_ENDPOINTS = {
     status: `${baseUrl}/api/timeoffice/status`,
     attendance: `${baseUrl}/api/timeoffice`
   },
+  employee: {
+    list: `${baseUrl}/api/Employee`,
+    summary: `${baseUrl}/api/Employee/summary`
+  },
   auth: {
     login:   `${baseUrl}/api/auth/login`,
     refresh: `${baseUrl}/api/auth/refresh`

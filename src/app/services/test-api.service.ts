@@ -26,4 +26,13 @@ export class TestApiService {
   getTimeOfficeAttendance(): Observable<any> {
     return this.http.get<any>(API_ENDPOINTS.timeoffice.attendance);
   }
+
+  getEmployees(dept?: string): Observable<any> {
+    const url = dept ? `${API_ENDPOINTS.employee.list}?department=${dept}` : API_ENDPOINTS.employee.list;
+    return this.http.get<any>(url);
+  }
+
+  getEmployeeSummary(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.employee.summary);
+  }
 }
