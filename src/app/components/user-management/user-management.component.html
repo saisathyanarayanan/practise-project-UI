@@ -1,0 +1,417 @@
+<div class="user-management-container">
+  <div class="header-section">
+    <div class="title-row">
+      <div class="brand">
+        <h1>🔐 Enterprise Password Security & Data Masking Laboratory</h1>
+        <p class="subtitle">
+          Comparing <strong>Argon2id One-Way Salted Hashing</strong> vs <strong>SQL Server Dynamic Data Masking (DDM)</strong>
+        </p>
+      <div class="tab-controls">
+        <a routerLink="/dashboard" class="tab-btn btn-nav-back">← Dashboard</a>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'both'"
+          (click)="activeTab.set('both')">
+          View Both Forms Side-by-Side
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'form1'"
+          (click)="activeTab.set('form1')">
+          Form 1: Argon2id Hashing
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'form2'"
+          (click)="activeTab.set('form2')">
+          Form 2: Direct SQL Masking
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="forms-wrapper" [class.single-column]="activeTab() !== 'both'">
+    
+    <!-- ========================================== -->
+    <!-- FORM 1: ARGON2ID HASHED USERS TABLE        -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'both' || activeTab() === 'form1') {
+      <div class="form-card form1-card">
+        <div class="card-header">
+          <div class="header-badge badge-argon2">Enterprise Standard</div>
+          <h2>Form 1: Argon2id Salted Password Hashing</h2>
+          <p class="card-desc">
+            Saves to dedicated table <code>maskedpasssword_usersTable</code> using OWASP-recommended Argon2id with 16-byte cryptographic salt.
+          </p>
+        </div>
+
+        <!-- Form 1 Submission -->
+        <form class="security-form" (ngSubmit)="submitHashedUser()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f1-username">Username <span class="required">*</span></label>
+              <input
+                id="f1-username"
+                type="text"
+                placeholder="e.g. enterprise_user"
+                [value]="f1Username()"
+                (input)="f1Username.set($any($event.target).value)"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="f1-password">Plain Password <span class="required">*</span></label>
+              <input
+                id="f1-password"
+                type="password"
+                placeholder="e.g. MyP@ssw0rd123!"
+                [value]="f1Password()"
+                (input)="f1Password.set($any($event.target).value)"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="f1-role">Role</label>
+              <select
+                id="f1-role"
+                [value]="f1Role()"
+                (change)="f1Role.set($any($event.target).value)">
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+                <option value="Manager">Manager</option>
+                <option value="Auditor">Auditor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="enterprise-spec-pill">
+            <span>🛡️ Algorithm: <strong>Argon2id (Hybrid)</strong></span>
+            <span>🧂 Salt: <strong>16-Byte Cryptographic Random</strong></span>
+            <span>⚙️ Memory: <strong>64 MB</strong> | Iterations: <strong>3</strong> | Lanes: <strong>4</strong></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="f1IsSubmitting()">
+              @if (f1IsSubmitting()) {
+                <span>⏳ Hashing & Saving...</span>
+              } @else {
+                <span>🚀 Register User (Argon2id Hash)</span>
+              }
+            </button>
+          </div>
+
+          @if (f1StatusMessage(); as msg) {
+            <div class="alert" [class.alert-success]="msg.type === 'success'" [class.alert-danger]="msg.type === 'error'">
+              {{ msg.text }}
+            </div>
+          }
+        </form>
+
+        <!-- Form 1 Table Section Below -->
+        <div class="table-section">
+          <div class="table-header-bar">
+            <div>
+              <h3>📋 Records in <code>maskedpasssword_usersTable</code></h3>
+              <small class="text-muted">Showing live records stored with Argon2id hash & salt</small>
+            </div>
+            <button type="button" class="btn btn-outline" (click)="loadHashedUsers()" [disabled]="isLoadingHashed()">
+              🔄 Refresh Table
+            </button>
+          </div>
+
+          <!-- Enterprise Cryptographic Clarification Banner -->
+          <div class="crypto-notice-banner">
+            <div class="notice-icon">💡</div>
+            <div class="notice-body">
+              <strong>Enterprise Cryptographic Architecture Note:</strong>
+              <p>
+                <strong>Argon2id is a one-way cryptographic hash function, NOT reversible encryption.</strong>
+                Hashes are mathematically designed with pre-image resistance so they <em>cannot be decrypted</em> back into plaintext.
+                In enterprise systems (OWASP & NIST SP 800-63B standards), storing irreversible hashes ensures that even a complete database breach will never expose user passwords.
+                To verify a password enterprise-style without ever storing or decrypting the plaintext, click <strong>"Verify Password"</strong> on any record below to test constant-time hash verification.
+              </p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Salt (Base64)</th>
+                  <th>Argon2id Encoded Hash (PHC Format)</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (isLoadingHashed()) {
+                  <tr>
+                    <td colspan="7" class="text-center py-4">⏳ Loading hashed users...</td>
+                  </tr>
+                } @else if (hashedUsers().length === 0) {
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No records in <code>maskedpasssword_usersTable</code> yet. Submit the form above!</td>
+                  </tr>
+                } @else {
+                  @for (user of hashedUsers(); track user.id) {
+                    <tr>
+                      <td class="cell-id"><strong>#{{ user.id }}</strong></td>
+                      <td class="cell-username">{{ user.username }}</td>
+                      <td><span class="role-badge">{{ user.role }}</span></td>
+                      <td class="cell-salt" [title]="user.salt">
+                        <code>{{ user.salt }}</code>
+                      </td>
+                      <td class="cell-hash">
+                        <div class="hash-box" [title]="user.passwordHash">
+                          <code class="hash-string">{{ user.passwordHash }}</code>
+                          <button
+                            type="button"
+                            class="btn-copy"
+                            (click)="copyToClipboard(user.passwordHash, user.id)"
+                            title="Copy full Argon2id hash">
+                            {{ copiedHashId() === user.id ? '✓ Copied' : '📋 Copy' }}
+                          </button>
+                        </div>
+                      </td>
+                      <td class="cell-date">{{ user.createdAt | date:'short' }}</td>
+                      <td>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-verify"
+                          (click)="openVerifyModal(user)">
+                          🔍 Verify Password
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Password Verification Modal / Box -->
+          @if (verifyUserId() !== null) {
+            <div class="verification-box">
+              <div class="verify-header">
+                <h4>🔐 Enterprise Password Verification (User ID: #{{ verifyUserId() }})</h4>
+                <button type="button" class="btn-close" (click)="closeVerifyModal()">✕</button>
+              </div>
+              <p class="verify-desc">
+                Test if a plaintext password matches this user's stored Argon2id hash using enterprise constant-time verification:
+              </p>
+              <div class="verify-inputs">
+                <input
+                  type="password"
+                  placeholder="Enter password to test against Argon2id hash..."
+                  [value]="candidatePassword()"
+                  (input)="candidatePassword.set($any($event.target).value)" />
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="verifyPassword()"
+                  [disabled]="isVerifying() || !candidatePassword()">
+                  @if (isVerifying()) {
+                    <span>Testing...</span>
+                  } @else {
+                    <span>Validate Match</span>
+                  }
+                </button>
+              </div>
+
+              @if (verifyResult(); as res) {
+                <div class="verify-result" [class.match]="res.isMatch" [class.mismatch]="!res.isMatch">
+                  <div class="result-title">
+                    {{ res.isMatch ? '✅ MATCH CONFIRMED!' : '❌ PASSWORD MISMATCH' }}
+                  </div>
+                  <div class="result-msg">{{ res.message }}</div>
+                  <small class="result-explanation">{{ res.explanation }}</small>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- FORM 2: DIRECT USER TABLE WITH SQL DDM     -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'both' || activeTab() === 'form2') {
+      <div class="form-card form2-card">
+        <div class="card-header">
+          <div class="header-badge badge-ddm">SQL Server DDM</div>
+          <h2>Form 2: Direct Password with Dynamic Data Masking</h2>
+          <p class="card-desc">
+            Saves plain password directly to table <code>Users</code>. In the database, the column is protected using <strong>SQL Server Dynamic Data Masking</strong> (DDM).
+          </p>
+        </div>
+
+        <!-- Form 2 Submission -->
+        <form class="security-form" (ngSubmit)="submitDirectUser()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f2-username">Username <span class="required">*</span></label>
+              <input
+                id="f2-username"
+                type="text"
+                placeholder="e.g. direct_user"
+                [value]="f2Username()"
+                (input)="f2Username.set($any($event.target).value)"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="f2-password">Direct Password <span class="required">*</span></label>
+              <input
+                id="f2-password"
+                type="password"
+                placeholder="e.g. DirectPass123"
+                [value]="f2Password()"
+                (input)="f2Password.set($any($event.target).value)"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="f2-role">Role</label>
+              <select
+                id="f2-role"
+                [value]="f2Role()"
+                (change)="f2Role.set($any($event.target).value)">
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+                <option value="Guest">Guest</option>
+                <option value="Manager">Manager</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ddm-spec-pill">
+            <span>🛡️ SQL Engine: <strong>SQL Server 2025</strong></span>
+            <span>🎭 DDM Function: <code>MASKED WITH (FUNCTION = 'default()')</code></span>
+            <span>👁️ Non-privileged queries see <code>xxxx</code>; Admins with UNMASK see plain data.</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success" [disabled]="f2IsSubmitting()">
+              @if (f2IsSubmitting()) {
+                <span>⏳ Saving to Users...</span>
+              } @else {
+                <span>💾 Save Directly to Users Table</span>
+              }
+            </button>
+          </div>
+
+          @if (f2StatusMessage(); as msg) {
+            <div class="alert" [class.alert-success]="msg.type === 'success'" [class.alert-danger]="msg.type === 'error'">
+              {{ msg.text }}
+            </div>
+          }
+        </form>
+
+        <!-- Form 2 Table Section Below -->
+        <div class="table-section">
+          <div class="table-header-bar">
+            <div>
+              <h3>📋 Records in <code>Users</code> (Direct Table)</h3>
+              <small class="text-muted">Currently viewing: <strong>{{ directViewMode() }}</strong></small>
+            </div>
+            
+            <div class="view-toggle-group">
+              <button
+                type="button"
+                class="btn-toggle"
+                [class.active]="asMaskedViewer()"
+                (click)="toggleMaskedView(true)">
+                🔒 Standard Query (DDM: 'xxxx')
+              </button>
+              <button
+                type="button"
+                class="btn-toggle"
+                [class.active]="!asMaskedViewer()"
+                (click)="toggleMaskedView(false)">
+                🔓 Admin Query (Unmasked)
+              </button>
+              <button type="button" class="btn btn-outline" (click)="loadDirectUsers()" [disabled]="isLoadingDirect()">
+                🔄
+              </button>
+            </div>
+          </div>
+
+          <div class="ddm-status-banner" [class.masked-mode]="asMaskedViewer()" [class.unmasked-mode]="!asMaskedViewer()">
+            @if (asMaskedViewer()) {
+              <div class="status-indicator">
+                <span class="icon">🎭</span>
+                <span>
+                  <strong>Active View: SQL Server Dynamic Data Masking (DDM)</strong> —
+                  SQL Server automatically replaced the password with <code>xxxx</code> because the query runs without <code>UNMASK</code> privilege.
+                </span>
+              </div>
+            } @else {
+              <div class="status-indicator">
+                <span class="icon">⚠️</span>
+                <span>
+                  <strong>Active View: Database Administrator (UNMASK)</strong> —
+                  Showing raw stored values as saved in the physical table without masking.
+                </span>
+              </div>
+            }
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Password Column (From SQL Server)</th>
+                  <th>Storage & Masking Mode</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (isLoadingDirect()) {
+                  <tr>
+                    <td colspan="5" class="text-center py-4">⏳ Loading Users...</td>
+                  </tr>
+                } @else if (directUsers().length === 0) {
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No records in <code>Users</code> yet.</td>
+                  </tr>
+                } @else {
+                  @for (user of directUsers(); track user.id) {
+                    <tr>
+                      <td class="cell-id"><strong>#{{ user.id }}</strong></td>
+                      <td class="cell-username">{{ user.username }}</td>
+                      <td><span class="role-badge">{{ user.role }}</span></td>
+                      <td class="cell-password">
+                        @if (asMaskedViewer()) {
+                          <span class="masked-value">🔒 {{ user.password }}</span>
+                        } @else {
+                          <span class="unmasked-value">🔓 {{ user.password }}</span>
+                        }
+                      </td>
+                      <td>
+                        @if (asMaskedViewer()) {
+                          <span class="badge-safe">🛡️ DDM Masked in DB</span>
+                        } @else {
+                          <span class="badge-warning">Raw Plaintext In Storage</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

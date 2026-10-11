@@ -7,6 +7,7 @@ import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { UserManagementComponent } from './components/user-management/user-management.component';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { loggingInterceptor } from './interceptors/logging.interceptor';
 
@@ -14,7 +15,8 @@ import { loggingInterceptor } from './interceptors/logging.interceptor';
   declarations: [
     App,
     LoginComponent,
-    DashboardComponent
+    DashboardComponent,
+    UserManagementComponent
   ],
   imports: [
     BrowserModule,

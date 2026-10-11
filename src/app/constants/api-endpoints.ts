@@ -19,6 +19,13 @@ export const API_ENDPOINTS = {
   auth: {
     login:   `${baseUrl}/api/auth/login`,
     refresh: `${baseUrl}/api/auth/refresh`
+  },
+  userManagement: {
+    hashedCreate: `${baseUrl}/api/usermanagement/hashed`,
+    hashedList:   `${baseUrl}/api/usermanagement/hashed`,
+    hashedVerify: `${baseUrl}/api/usermanagement/hashed/verify`,
+    directCreate: `${baseUrl}/api/usermanagement/direct`,
+    directList:   `${baseUrl}/api/usermanagement/direct`
   }
 } as const;
 
