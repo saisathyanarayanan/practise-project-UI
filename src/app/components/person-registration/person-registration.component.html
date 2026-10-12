@@ -68,18 +68,38 @@
       <!-- Idempotency Key Live Badge -->
       <div class="key-banner">
         <div class="key-header">
-          <span class="key-label">🔑 Active Idempotency-Key (Header):</span>
-          <span class="click-counter">Attempts with this key: <strong>#{{ clickCounter() }}</strong></span>
+          <div class="key-label-group">
+            <span class="key-label">🔑 Active Idempotency-Key (Header):</span>
+            @if (isRequesting()) {
+              <span class="status-pill in-flight">⚡ In-Flight (Sending...)</span>
+            } @else {
+              <span class="status-pill idle">⚪ Ready (Generates on Submit)</span>
+            }
+          </div>
+          @if (isRequesting()) {
+            <span class="click-counter">In-flight attempts: <strong>#{{ clickCounter() }}</strong></span>
+          }
         </div>
         <div class="key-display-box">
-          <code class="key-code">{{ currentIdempotencyKey() }}</code>
-          <div class="key-actions">
-            <button type="button" class="btn-sm" (click)="copyKey()" title="Copy Key">📋 Copy</button>
-            <button type="button" class="btn-sm btn-refresh-key" (click)="generateNewIdempotencyKey()" title="Generate New Key">🔄 New Key</button>
-          </div>
+          @if (currentIdempotencyKey()) {
+            <code class="key-code">{{ currentIdempotencyKey() }}</code>
+            <div class="key-actions">
+              <button type="button" class="btn-sm" (click)="copyKey()" title="Copy Key">📋 Copy</button>
+            </div>
+          } @else {
+            <code class="key-code empty-code">[ EMPTY - Key will be generated dynamically when you click Submit ]</code>
+          }
         </div>
+
+        @if (lastUsedKey()) {
+          <div class="last-key-row">
+            <span class="last-key-label">✔️ Last saved key in DB:</span>
+            <code class="last-key-code">{{ lastUsedKey() }}</code>
+          </div>
+        }
+
         <small class="key-hint">
-          All requests sharing this exact key will be processed at most once by the database.
+          ⚡ <strong>Dynamic Enterprise Lifecycle:</strong> Key starts <em>empty</em>. When you click Submit, a fresh key is generated for the request. If you click Submit twice rapidly, both clicks reuse the same in-flight key to prevent duplicate records. Once saved in SQL Server, the key automatically empties again!
         </small>
       </div>
 

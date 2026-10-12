@@ -6,7 +6,7 @@ import {
   Person,
   SubmissionAttempt
 } from '../../models/person.models';
-import { forkJoin } from 'rxjs';
+import { forkJoin, catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-person-registration',
@@ -23,6 +23,8 @@ export class PersonRegistrationComponent implements OnInit {
 
   // Enterprise Idempotency Key state
   currentIdempotencyKey = signal<string>('');
+  lastUsedKey = signal<string | null>(null);
+  autoRefreshOnSuccess = signal<boolean>(true);
   clickCounter = signal<number>(0);
   isRequesting = signal<boolean>(false);
 
@@ -44,7 +46,7 @@ export class PersonRegistrationComponent implements OnInit {
   constructor(private readonly personService: PersonService) {}
 
   ngOnInit(): void {
-    this.generateNewIdempotencyKey();
+    // Key starts EMPTY as requested: generated on the fly at request time
     this.loadPersons();
   }
 
@@ -52,16 +54,10 @@ export class PersonRegistrationComponent implements OnInit {
    * Generates a cryptographically random UUID v4 representing a single client intent/action.
    * it will in the form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx where x is any hexadecimal digit and y is one of 8, 9, A, or B.
    */
-  generateNewIdempotencyKey(): void {
-    const newKey = typeof crypto !== 'undefined' && crypto.randomUUID
+  generateNewUUID(): string {
+    return typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : this.fallbackGuid();
-    this.currentIdempotencyKey.set(newKey);
-    this.clickCounter.set(0);
-    this.statusAlert.set({
-      type: 'info',
-      message: `Fresh Idempotency-Key generated: ${newKey}. Ready for testing!`
-    });
   }
 
   private fallbackGuid(): string {
@@ -90,7 +86,15 @@ export class PersonRegistrationComponent implements OnInit {
     const payload = this.getPayload();
     if (!payload) return;
 
-    const key = this.currentIdempotencyKey();
+    // If ALREADY in-flight (rapid double-click before response finishes), reuse the active key!
+    // If NOT in-flight (fresh submission), generate a brand new UUID!
+    let key = this.currentIdempotencyKey();
+    if (!this.isRequesting() || !key) {
+      key = this.generateNewUUID();
+      this.currentIdempotencyKey.set(key);
+    }
+
+    this.lastUsedKey.set(key);
     const currentAttempt = this.clickCounter() + 1;
     this.clickCounter.set(currentAttempt);
     this.totalClicks.update(n => n + 1);
@@ -102,6 +106,10 @@ export class PersonRegistrationComponent implements OnInit {
 
         console.log('Response received now for relay ----:', response);
         this.isRequesting.set(false);
+        // ALWAYS clear current in-flight key upon completion!
+        this.currentIdempotencyKey.set('');
+        this.clickCounter.set(0);
+
         this.recordAttempt(currentAttempt, key, response.isReplay ? 200 : 201, response.isReplay, response.message, payload.name);
 
         if (response.isReplay) {
@@ -109,22 +117,24 @@ export class PersonRegistrationComponent implements OnInit {
           this.statusAlert.set({
             type: 'warning',
             isReplay: true,
-            message: `⚡ IDEMPOTENT REPLAY DETECTED! (Attempt #${currentAttempt})\nThe server identified key '${key}' was already executed. The cached response was returned safely without creating any duplicate rows in the database!`
+            message: `⚡ IDEMPOTENT REPLAY DETECTED! (Attempt #${currentAttempt})\nThe server identified key '${key}' was already executed. Returned cached record safely without duplicates in DB!`
           });
         } else {
           this.totalDbInserts.update(n => n + 1);
           this.statusAlert.set({
             type: 'success',
             isReplay: false,
-            message: `✅ FIRST SUBMISSION SUCCESSFUL! (Attempt #${currentAttempt})\nNew row inserted into SQL Server Persons table with unique key '${key}'.\nNow try clicking Submit AGAIN to test idempotency duplicate protection!`
+            message: `✅ SUBMISSION SUCCESSFUL! (Attempt #${currentAttempt})\nNew row inserted into SQL Server with key '${key}'.\nKey is now cleared so your next submission will generate a fresh key!`
           });
         }
 
-        // Refresh DB table to prove row count
         this.loadPersons();
       },
       error: (err) => {
         this.isRequesting.set(false);
+        this.currentIdempotencyKey.set('');
+        this.clickCounter.set(0);
+
         const errMsg = err.error?.message || err.message || 'An error occurred';
         const statusCode = err.status || 'ERR';
         this.recordAttempt(currentAttempt, key, statusCode, false, errMsg, payload.name);
@@ -143,38 +153,47 @@ export class PersonRegistrationComponent implements OnInit {
     const payload = this.getPayload();
     if (!payload) return;
 
-    const key = this.currentIdempotencyKey();
+    // Both requests share the exact same generated key
+    const key = this.generateNewUUID();
+    this.currentIdempotencyKey.set(key);
+    this.lastUsedKey.set(key);
+    this.isRequesting.set(true);
+
     const startAttempt = this.clickCounter();
     this.clickCounter.update(c => c + 2);
     this.totalClicks.update(n => n + 2);
-    this.isRequesting.set(true);
 
-    // Fire 2 concurrent HTTP requests simultaneously
-    const req1$ = this.personService.createPerson(payload, key);
-    const req2$ = this.personService.createPerson(payload, key);
+    const req1$ = this.personService.createPerson(payload, key).pipe(
+      catchError(err => of({ isError: true, status: err.status || 500, message: err.error?.message || err.message } as any))
+    );
+    const req2$ = this.personService.createPerson(payload, key).pipe(
+      catchError(err => of({ isError: true, status: err.status || 500, message: err.error?.message || err.message } as any))
+    );
 
-    forkJoin([req1$, req2$]).subscribe({    // forkJoin() is an RxJS operator that runs multiple Observables and waits until all of them complete before executing the next block.
+    forkJoin([req1$, req2$]).subscribe({
       next: ([res1, res2]) => {
         this.isRequesting.set(false);
-        this.recordAttempt(startAttempt + 1, key, res1.isReplay ? 200 : 201, res1.isReplay, res1.message, payload.name);
-        this.recordAttempt(startAttempt + 2, key, res2.isReplay ? 200 : 201, res2.isReplay, res2.message, payload.name);
+        this.currentIdempotencyKey.set('');
+        this.clickCounter.set(0);
 
-        if (res1.isReplay) this.totalReplaysBlocked.update(n => n + 1); else this.totalDbInserts.update(n => n + 1);
-        if (res2.isReplay) this.totalReplaysBlocked.update(n => n + 1); else this.totalDbInserts.update(n => n + 1);
+        const handleRes = (res: any, attemptNum: number) => {
+          if (res.isError) {
+            this.recordAttempt(attemptNum, key, res.status, false, res.message, payload.name);
+          } else {
+            this.recordAttempt(attemptNum, key, res.isReplay ? 200 : 201, res.isReplay, res.message, payload.name);
+            if (res.isReplay) this.totalReplaysBlocked.update(n => n + 1);
+            else this.totalDbInserts.update(n => n + 1);
+          }
+        };
+
+        handleRes(res1, startAttempt + 1);
+        handleRes(res2, startAttempt + 2);
 
         this.statusAlert.set({
           type: 'info',
-          message: `⚡ Rapid Double-Click Simulation Finished!\nRequest 1: ${res1.isReplay ? 'Replay' : 'Created'}\nRequest 2: ${res2.isReplay ? 'Replay (Duplicate Prevented!)' : 'Created'}\nCheck the database below — zero duplicate records!`
+          message: `⚡ Rapid Double-Click Simulation Finished!\n2 requests fired simultaneously with key '${key}'.\nKey is now cleared so your next submission starts fresh!`
         });
 
-        this.loadPersons();
-      },
-      error: (err) => {
-        this.isRequesting.set(false);
-        this.statusAlert.set({
-          type: 'warning',
-          message: `Simulation response received: ${err.error?.message || err.message}`
-        });
         this.loadPersons();
       }
     });
@@ -187,32 +206,43 @@ export class PersonRegistrationComponent implements OnInit {
     const payload = this.getPayload();
     if (!payload) return;
 
-    const key = this.currentIdempotencyKey();
+    const key = this.generateNewUUID();
+    this.currentIdempotencyKey.set(key);
+    this.lastUsedKey.set(key);
+    this.isRequesting.set(true);
+
     const startAttempt = this.clickCounter();
     this.clickCounter.update(c => c + 5);
     this.totalClicks.update(n => n + 5);
-    this.isRequesting.set(true);
 
-    const requests = Array.from({ length: 5 }, () => this.personService.createPerson(payload, key));
+    const requests = Array.from({ length: 5 }, () =>
+      this.personService.createPerson(payload, key).pipe(
+        catchError(err => of({ isError: true, status: err.status || 500, message: err.error?.message || err.message } as any))
+      )
+    );
 
     forkJoin(requests).subscribe({
       next: (results) => {
         this.isRequesting.set(false);
+        this.currentIdempotencyKey.set('');
+        this.clickCounter.set(0);
+
         results.forEach((res, index) => {
-          this.recordAttempt(startAttempt + index + 1, key, res.isReplay ? 200 : 201, res.isReplay, res.message, payload.name);
-          if (res.isReplay) this.totalReplaysBlocked.update(n => n + 1);
-          else this.totalDbInserts.update(n => n + 1);
+          const attemptNum = startAttempt + index + 1;
+          if (res.isError) {
+            this.recordAttempt(attemptNum, key, res.status, false, res.message, payload.name);
+          } else {
+            this.recordAttempt(attemptNum, key, res.isReplay ? 200 : 201, res.isReplay, res.message, payload.name);
+            if (res.isReplay) this.totalReplaysBlocked.update(n => n + 1);
+            else this.totalDbInserts.update(n => n + 1);
+          }
         });
 
         this.statusAlert.set({
           type: 'info',
-          message: `🔥 5x Spam Click Completed! 5 simultaneous requests sent. Only 1 record was written to the database; the other 4 were safely recognized and replayed.`
+          message: `🔥 5x Spam Click Completed! 5 simultaneous requests sent with key '${key}'.\nKey is now cleared so your next submission starts fresh!`
         });
 
-        this.loadPersons();
-      },
-      error: (err) => {
-        this.isRequesting.set(false);
         this.loadPersons();
       }
     });
@@ -241,10 +271,11 @@ export class PersonRegistrationComponent implements OnInit {
         this.totalClicks.set(0);
         this.totalDbInserts.set(0);
         this.totalReplaysBlocked.set(0);
-        this.generateNewIdempotencyKey();
+        this.currentIdempotencyKey.set('');
+        this.lastUsedKey.set(null);
         this.statusAlert.set({
           type: 'info',
-          message: 'All test data and idempotency audit logs cleared successfully.'
+          message: 'All test data and idempotency audit logs cleared successfully. Key is empty and ready for dynamic generation.'
         });
       }
     });

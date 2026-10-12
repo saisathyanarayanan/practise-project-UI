@@ -238,17 +238,71 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     margin-bottom: 0.4rem;
 
-    .key-label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #334155;
+    .key-label-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .key-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #334155;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.15rem 0.55rem;
+        border-radius: 12px;
+
+        &.idle {
+          background: #f1f5f9;
+          color: #64748b;
+          border: 1px dashed #cbd5e1;
+        }
+
+        &.in-flight {
+          background: #e0f2fe;
+          color: #0284c7;
+          border: 1px solid #7dd3fc;
+          animation: pulse 1.5s infinite;
+        }
+      }
     }
 
     .click-counter {
       font-size: 0.82rem;
       color: #64748b;
+    }
+  }
+
+  .last-key-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+    padding: 0.35rem 0.65rem;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+    font-size: 0.78rem;
+
+    .last-key-label {
+      color: #065f46;
+      font-weight: 600;
+    }
+
+    .last-key-code {
+      color: #047857;
+      font-family: monospace;
+      font-size: 0.76rem;
     }
   }
 
@@ -266,6 +320,12 @@
       font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
       font-size: 0.88rem;
       word-break: break-all;
+
+      &.empty-code {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.82rem;
+      }
     }
 
     .key-actions {
