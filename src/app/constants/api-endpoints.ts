@@ -26,6 +26,12 @@ export const API_ENDPOINTS = {
     hashedVerify: `${baseUrl}/api/usermanagement/hashed/verify`,
     directCreate: `${baseUrl}/api/usermanagement/direct`,
     directList:   `${baseUrl}/api/usermanagement/direct`
+  },
+  person: {
+    create: `${baseUrl}/api/person`,
+    list: `${baseUrl}/api/person`,
+    audit: `${baseUrl}/api/person/audit`,
+    clear: `${baseUrl}/api/person/clear-test-data`
   }
 } as const;
 

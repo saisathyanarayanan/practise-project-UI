@@ -6,6 +6,7 @@
     </div>
 
     <div class="user-controls">
+      <a routerLink="/idempotent-form" class="btn-lab" style="background: linear-gradient(135deg, #0284c7, #2563eb);">🔁 Idempotent Form Lab</a>
       <a routerLink="/users" class="btn-lab">🔐 Argon2id & Masking Lab</a>
       <div class="user-info">
         <span class="username">{{ authService.currentUser()?.username }}</span>
@@ -20,7 +21,7 @@
     <div class="card session-card">
       <h3>⏱️ Live Session & JWT Status</h3>
       <p class="description">
-        Token lifetime is set to <strong>5 minute</strong> on the API. When remaining time is <strong>&lt; 20 seconds</strong>,
+        Token lifetime is set to <strong>30 minute</strong> on the API. When remaining time is <strong>&lt; 20 seconds</strong>,
         a warning appears allowing you to extend the session.
       </p>
 

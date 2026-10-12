@@ -1,0 +1,301 @@
+<div class="registration-container">
+  <!-- Header Banner -->
+  <header class="header-section">
+    <div class="title-row">
+      <div class="brand">
+        <h1>🛡️ Enterprise Idempotent Form Lab</h1>
+        <p class="subtitle">
+          Guaranteed <strong>Exactly-Once Processing</strong> via <code>Idempotency-Key</code> header &amp; SQL Server atomic locks
+        </p>
+      </div>
+      <div class="nav-actions">
+        <a routerLink="/dashboard" class="btn-nav">📊 Dashboard</a>
+        <a routerLink="/users" class="btn-nav">🔐 Security Lab</a>
+      </div>
+    </div>
+
+    <!-- Live Metrics Counter -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-value">{{ totalClicks() }}</span>
+        <span class="metric-label">Total Clicks Sent</span>
+      </div>
+      <div class="metric-card success">
+        <span class="metric-value">{{ totalDbInserts() }}</span>
+        <span class="metric-label">DB Records Inserted (201 Created)</span>
+      </div>
+      <div class="metric-card warning">
+        <span class="metric-value">{{ totalReplaysBlocked() }}</span>
+        <span class="metric-label">Duplicates Intercepted &amp; Replayed (200 OK)</span>
+      </div>
+      <div class="metric-card info">
+        <span class="metric-value">{{ dbPersons().length }}</span>
+        <span class="metric-label">Total Rows in SQL Server</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Alert Banner -->
+  @if (statusAlert()) {
+    <div class="alert-box" [class]="statusAlert()?.type">
+      <div class="alert-content">
+        <span class="alert-icon">
+          @if (statusAlert()?.type === 'success') { ✅ }
+          @else if (statusAlert()?.type === 'warning') { ⚠️ }
+          @else if (statusAlert()?.type === 'info') { ℹ️ }
+          @else { ❌ }
+        </span>
+        <div class="alert-text">
+          <pre>{{ statusAlert()?.message }}</pre>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="main-grid">
+    <!-- Left Column: The Registration Form -->
+    <div class="card form-card">
+      <div class="card-header">
+        <div class="header-title">
+          <h2>📝 Person Registration Form</h2>
+          <span class="badge-active">Idempotency Protected</span>
+        </div>
+        <p class="form-desc">
+          Fill in the details below. As requested, the Submit button is <strong>never disabled</strong> so you can click it multiple times to simulate double-clicks and network retries!
+        </p>
+      </div>
+
+      <!-- Idempotency Key Live Badge -->
+      <div class="key-banner">
+        <div class="key-header">
+          <span class="key-label">🔑 Active Idempotency-Key (Header):</span>
+          <span class="click-counter">Attempts with this key: <strong>#{{ clickCounter() }}</strong></span>
+        </div>
+        <div class="key-display-box">
+          <code class="key-code">{{ currentIdempotencyKey() }}</code>
+          <div class="key-actions">
+            <button type="button" class="btn-sm" (click)="copyKey()" title="Copy Key">📋 Copy</button>
+            <button type="button" class="btn-sm btn-refresh-key" (click)="generateNewIdempotencyKey()" title="Generate New Key">🔄 New Key</button>
+          </div>
+        </div>
+        <small class="key-hint">
+          All requests sharing this exact key will be processed at most once by the database.
+        </small>
+      </div>
+
+      <!-- Form Inputs -->
+      <form class="person-form" (ngSubmit)="submitForm()">
+        <div class="form-group">
+          <label for="nameInput">Full Name <span class="req">*</span></label>
+          <input
+            id="nameInput"
+            type="text"
+            class="form-control"
+            placeholder="e.g. Alice Johnson"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            name="name"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="ageInput">Age <span class="req">*</span></label>
+            <input
+              id="ageInput"
+              type="number"
+              class="form-control"
+              placeholder="e.g. 28"
+              [ngModel]="age()"
+              (ngModelChange)="age.set($event)"
+              name="age"
+              min="1"
+              max="150"
+              required
+            />
+          </div>
+
+          <div class="form-group col-half">
+            <label for="sexSelect">Sex <span class="req">*</span></label>
+            <select
+              id="sexSelect"
+              class="form-control"
+              [ngModel]="sex()"
+              (ngModelChange)="sex.set($event)"
+              name="sex"
+              required
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phoneInput">Number (Phone / Contact) <span class="req">*</span></label>
+          <input
+            id="phoneInput"
+            type="text"
+            class="form-control"
+            placeholder="e.g. +1 555 987 6543"
+            [ngModel]="phoneNumber()"
+            (ngModelChange)="phoneNumber.set($event)"
+            name="phoneNumber"
+            required
+          />
+        </div>
+
+        <!-- Submit & Simulation Buttons -->
+        <div class="action-section">
+          <!-- Primary Submit button - Never Disabled! -->
+          <button
+            type="submit"
+            class="btn-submit"
+            [class.requesting]="isRequesting()"
+          >
+            🚀 Submit Form (Click Repeatedly to Test!)
+          </button>
+
+          <div class="simulation-actions">
+            <button
+              type="button"
+              class="btn-sim double-click"
+              (click)="testRapidDoubleClick()"
+              title="Fires 2 identical requests at the exact same millisecond"
+            >
+              ⚡ Test Rapid Double-Click (2x Concurrent)
+            </button>
+
+            <button
+              type="button"
+              class="btn-sim spam-click"
+              (click)="testAggressiveSpam()"
+              title="Fires 5 identical requests at the same millisecond"
+            >
+              🔥 Test Rapid 5x Spam Click
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Enterprise Architecture Explanation Box -->
+      <div class="info-accordion">
+        <h3>🏢 How Enterprise Idempotency Works (Stripe &amp; IETF Standard):</h3>
+        <ol class="steps-list">
+          <li><strong>Client Generates Key:</strong> Before making the request, a unique UUID is created and attached as <code>Idempotency-Key: &lt;UUID&gt;</code>.</li>
+          <li><strong>First Request:</strong> The backend computes a SHA-256 payload hash and atomically locks the key in SQL Server. It inserts the record into <code>Persons</code> and caches the response. Returns <code>HTTP 201 Created</code>.</li>
+          <li><strong>Duplicate Clicks / Network Retries:</strong> When another request arrives with the same key, the backend checks SQL Server. It detects the completed operation, verifies the payload hash, and replays the cached response with <code>HTTP 200 OK</code> and <code>Idempotent-Replay: true</code> header. <em>No duplicate database insert ever occurs!</em></li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Right Column: Audit Log & Live SQL Server Table -->
+    <div class="right-column">
+      <!-- Live SQL Server DB View -->
+      <div class="card db-card">
+        <div class="card-header flex-header">
+          <div>
+            <h3>🗄️ SQL Server Database: <code>Persons</code> Table</h3>
+            <span class="db-subtitle">Verified row count currently stored in database</span>
+          </div>
+          <div class="db-actions">
+            <button type="button" class="btn-refresh" (click)="loadPersons()">🔄 Refresh DB</button>
+            <button type="button" class="btn-clear" (click)="clearTestData()">🗑️ Clear Data</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Idempotency Key</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Sex</th>
+                <th>Number</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (isLoadingPersons()) {
+                <tr>
+                  <td colspan="7" class="empty-state">Loading database records...</td>
+                </tr>
+              } @else if (dbPersons().length === 0) {
+                <tr>
+                  <td colspan="7" class="empty-state">
+                    No records found in SQL Server yet. Submit the form to create your first record!
+                  </td>
+                </tr>
+              } @else {
+                @for (p of dbPersons(); track p.id) {
+                  <tr>
+                    <td><strong>#{{ p.id }}</strong></td>
+                    <td><code class="mini-key" [title]="p.idempotencyKey">{{ p.idempotencyKey.substring(0, 18) }}...</code></td>
+                    <td><strong>{{ p.name }}</strong></td>
+                    <td>{{ p.age }}</td>
+                    <td><span class="badge-sex">{{ p.sex }}</span></td>
+                    <td>{{ p.phoneNumber }}</td>
+                    <td><small>{{ p.createdAt | date:'HH:mm:ss' }}</small></td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Real-time Submission Audit Feed -->
+      <div class="card audit-card">
+        <div class="card-header flex-header">
+          <div>
+            <h3>📡 Real-Time HTTP Request Audit Feed</h3>
+            <span class="db-subtitle">Track every click attempt &amp; replay decision live</span>
+          </div>
+          <span class="badge-attempts">{{ attemptHistory().length }} Total Attempts</span>
+        </div>
+
+        <div class="audit-feed">
+          @if (attemptHistory().length === 0) {
+            <div class="empty-audit">
+              No requests fired yet. Click the submit button above to see the live idempotency telemetry!
+            </div>
+          } @else {
+            @for (attempt of attemptHistory(); track attempt.attemptNumber) {
+              <div class="audit-item" [class.is-replay]="attempt.isReplay" [class.is-success]="!attempt.isReplay">
+                <div class="item-header">
+                  <div class="item-meta">
+                    <span class="attempt-badge">Attempt #{{ attempt.attemptNumber }}</span>
+                    <span class="timestamp">{{ attempt.timestamp }}</span>
+                    <span class="http-badge" [class.status-201]="attempt.httpStatus === 201" [class.status-200]="attempt.httpStatus === 200">
+                      HTTP {{ attempt.httpStatus }}
+                    </span>
+                  </div>
+                  <div class="decision-badge" [class.replayed]="attempt.isReplay">
+                    @if (attempt.isReplay) {
+                      🟡 Idempotent Replay (Duplicate Blocked)
+                    } @else {
+                      🟢 Fresh Execution (Inserted into DB)
+                    }
+                  </div>
+                </div>
+
+                <div class="item-body">
+                  <div class="key-row">
+                    <span class="label">Key:</span> <code>{{ attempt.idempotencyKey }}</code>
+                  </div>
+                  <div class="msg-row">
+                    <span class="label">Result:</span> {{ attempt.message }}
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

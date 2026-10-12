@@ -8,6 +8,7 @@ import { App } from './app';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { UserManagementComponent } from './components/user-management/user-management.component';
+import { PersonRegistrationComponent } from './components/person-registration/person-registration.component';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { loggingInterceptor } from './interceptors/logging.interceptor';
 
@@ -16,7 +17,8 @@ import { loggingInterceptor } from './interceptors/logging.interceptor';
     App,
     LoginComponent,
     DashboardComponent,
-    UserManagementComponent
+    UserManagementComponent,
+    PersonRegistrationComponent
   ],
   imports: [
     BrowserModule,
