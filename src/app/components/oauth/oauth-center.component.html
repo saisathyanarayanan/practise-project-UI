@@ -1,0 +1,330 @@
+<div class="oauth-container">
+  <!-- Header -->
+  <header class="oauth-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h2>🛡️ Enterprise OAuth 2.0 & OpenID Connect Center</h2>
+        <span class="badge enterprise">RFC 7636 PKCE • RFC 7009 • RFC 7662</span>
+      </div>
+      <p class="subtitle">
+        Zero-trust OAuth 2.0 Authorization Server with Proof Key for Code Exchange (PKCE), Refresh Token Rotation,
+        Token Introspection, Revocation, and OpenID Connect Discovery.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/dashboard" class="btn-nav">← Back to Dashboard</a>
+      <a routerLink="/idempotent-form" class="btn-nav">🔁 Idempotent Form</a>
+      <a routerLink="/users" class="btn-nav">🔐 Argon2id Lab</a>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  @if (errorMessage()) {
+    <div class="alert error-alert" role="alert">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="alert-close" (click)="errorMessage.set(null)">✕</button>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert success-alert" role="alert">
+      <span>{{ successMessage() }}</span>
+      <button type="button" class="alert-close" (click)="successMessage.set(null)">✕</button>
+    </div>
+  }
+
+  <!-- Navigation Tabs -->
+  <nav class="oauth-tabs">
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'pkce'" (click)="activeTab.set('pkce')">
+      🛡️ 1. PKCE Studio & Auth Flow
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'tokens'" (click)="activeTab.set('tokens')">
+      🔑 2. Token Inspector & Rotation
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'userinfo'" (click)="activeTab.set('userinfo')">
+      👤 3. OIDC UserInfo
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'introspect'" (click)="activeTab.set('introspect')">
+      🔍 4. RFC 7662 Introspection
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'm2m'" (click)="activeTab.set('m2m')">
+      🤖 5. M2M Client Credentials
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab() === 'discovery'" (click)="loadDiscoveryDocument()">
+      🌐 6. OIDC Discovery
+    </button>
+  </nav>
+
+  <!-- Tab Content -->
+  <main class="oauth-main">
+
+    <!-- TAB 1: PKCE Studio & Auth Flow -->
+    @if (activeTab() === 'pkce') {
+      <div class="tab-grid">
+        <!-- PKCE Cryptography Card -->
+        <section class="card">
+          <div class="card-header">
+            <h3>🔐 PKCE Cryptographic Parameters (RFC 7636)</h3>
+            <button type="button" class="btn-small" (click)="generateNewPkce()">⚡ Regenerate PKCE</button>
+          </div>
+          <p class="hint">
+            Public clients (SPAs like Angular) cannot safely hold a <code>client_secret</code>.
+            PKCE generates a dynamic high-entropy <strong>verifier</strong> and transforms it into a
+            <strong>SHA-256 Base64Url challenge</strong> sent to the server.
+          </p>
+
+          <div class="param-group">
+            <label>Code Verifier (High-Entropy Secret, 64 chars):</label>
+            <div class="code-box">{{ pkcePair()?.verifier }}</div>
+          </div>
+
+          <div class="param-group">
+            <label>Code Challenge (Base64Url(SHA256(verifier))):</label>
+            <div class="code-box highlight">{{ pkcePair()?.challenge }}</div>
+          </div>
+
+          <div class="param-row">
+            <div>
+              <label>Challenge Method:</label>
+              <div class="badge-tag">S256</div>
+            </div>
+            <div>
+              <label>Anti-CSRF State Parameter:</label>
+              <div class="code-inline">{{ pkcePair()?.state }}</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Authorization Form Card -->
+        <section class="card">
+          <div class="card-header">
+            <h3>🚀 Initiate Authorization Code Flow</h3>
+          </div>
+          <p class="hint">
+            Submits authorization request to <code>/api/oauth/authorize</code> and securely performs the code-verifier token exchange at <code>/api/oauth/token</code>.
+          </p>
+
+          <div class="form-group">
+            <label for="username">Username:</label>
+            <input id="username" type="text" [value]="username()" (input)="username.set($any($event.target).value)" class="input-text" />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password:</label>
+            <input id="password" type="password" [value]="password()" (input)="password.set($any($event.target).value)" class="input-text" />
+          </div>
+
+          <div class="form-group">
+            <label for="clientId">Registered OAuth Client ID (Public SPA):</label>
+            <input id="clientId" type="text" [value]="clientId()" (input)="clientId.set($any($event.target).value)" class="input-text" />
+          </div>
+
+          <div class="actions-row">
+            <button type="button" class="btn-primary" [disabled]="loading()" (click)="runPkceAuthorizationFlow()">
+              @if (loading()) { ⏳ Processing PKCE Flow... } @else { 🚀 Run PKCE Authorization Code Flow }
+            </button>
+          </div>
+        </section>
+      </div>
+    }
+
+    <!-- TAB 2: Token Inspector & Rotation -->
+    @if (activeTab() === 'tokens') {
+      <section class="card full-width">
+        <div class="card-header">
+          <h3>🔑 OAuth 2.0 & OIDC Token Portfolio</h3>
+          <div class="card-header-actions">
+            <button type="button" class="btn-action" (click)="rotateRefreshToken()" [disabled]="!oauthService.refreshToken() || loading()">
+              🔄 Rotate Refresh Token
+            </button>
+            <button type="button" class="btn-action danger" (click)="revokeTokens()" [disabled]="!oauthService.accessToken()">
+              ⛔ Revoke & Logout (RFC 7009)
+            </button>
+          </div>
+        </div>
+
+        @if (oauthService.isAuthenticated()) {
+          <div class="tokens-display-grid">
+            <!-- Access Token -->
+            <div class="token-card">
+              <div class="token-title">
+                <span>Access Token (JWT)</span>
+                <span class="badge">Expires in 30 mins</span>
+              </div>
+              <div class="code-box small-text">{{ oauthService.accessToken() }}</div>
+            </div>
+
+            <!-- Refresh Token -->
+            <div class="token-card">
+              <div class="token-title">
+                <span>Refresh Token (Rotating Opaque Hash)</span>
+                <span class="badge warning">Single-Use (Rotates)</span>
+              </div>
+              <div class="code-box small-text">{{ oauthService.refreshToken() || 'Not Issued' }}</div>
+            </div>
+
+            <!-- ID Token -->
+            <div class="token-card">
+              <div class="token-title">
+                <span>OpenID Connect ID Token (OIDC Core 1.0)</span>
+                <span class="badge success">Standard Claims</span>
+              </div>
+              <div class="code-box small-text">{{ oauthService.idToken() || 'Not Issued' }}</div>
+            </div>
+          </div>
+
+          <!-- Decoded ID Token Claims -->
+          @if (oauthService.decodedIdToken()) {
+            <div class="decoded-claims-section">
+              <h4>📋 Decoded ID Token Payload (Cryptographically Signed Claims):</h4>
+              <div class="console-box">
+                <pre>{{ oauthService.decodedIdToken() | json }}</pre>
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="empty-state">
+            <p>No active OAuth tokens found. Please run the PKCE Authorization Code flow on Tab 1.</p>
+            <button type="button" class="btn-primary" (click)="activeTab.set('pkce')">Go to PKCE Flow →</button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- TAB 3: OIDC UserInfo -->
+    @if (activeTab() === 'userinfo') {
+      <section class="card full-width">
+        <div class="card-header">
+          <h3>👤 OpenID Connect UserInfo Endpoint</h3>
+          <button type="button" class="btn-action" (click)="fetchUserInfo()" [disabled]="!oauthService.accessToken() || loading()">
+            📡 Query <code>/api/oauth/userinfo</code>
+          </button>
+        </div>
+        <p class="hint">
+          Standard OIDC UserInfo endpoint validates the Access Token via <code>Authorization: Bearer &lt;token&gt;</code> and returns identity claims.
+        </p>
+
+        @if (userInfoData()) {
+          <div class="profile-grid">
+            <div class="profile-item">
+              <span class="label">Subject Identifier (sub):</span>
+              <span class="value">{{ userInfoData()?.sub }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="label">Preferred Username:</span>
+              <span class="value">{{ userInfoData()?.preferred_username }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="label">Display Name:</span>
+              <span class="value">{{ userInfoData()?.name }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="label">User Role:</span>
+              <span class="value role-badge">{{ userInfoData()?.role }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="label">Enterprise Email:</span>
+              <span class="value">{{ userInfoData()?.email }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="label">Department:</span>
+              <span class="value">{{ userInfoData()?.department }}</span>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <p>Click "Query /api/oauth/userinfo" to fetch authenticated profile data using your Bearer token.</p>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- TAB 4: RFC 7662 Introspection -->
+    @if (activeTab() === 'introspect') {
+      <section class="card full-width">
+        <div class="card-header">
+          <h3>🔍 RFC 7662 Token Introspection</h3>
+          <button type="button" class="btn-action" (click)="introspectCurrentToken()" [disabled]="!oauthService.accessToken() || loading()">
+            🔍 Introspect Active Token
+          </button>
+        </div>
+        <p class="hint">
+          API Gateways and Resource Servers query <code>/api/oauth/introspect</code> to determine the real-time active state and metadata of tokens.
+        </p>
+
+        @if (introspectData()) {
+          <div class="console-box" [class.success]="introspectData()?.active" [class.danger]="!introspectData()?.active">
+            <div class="console-header">Introspection Result (Active: {{ introspectData()?.active }})</div>
+            <pre>{{ introspectData() | json }}</pre>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <p>Click "Introspect Active Token" to verify token metadata with the authorization server.</p>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- TAB 5: Machine-to-Machine Client Credentials -->
+    @if (activeTab() === 'm2m') {
+      <section class="card full-width">
+        <div class="card-header">
+          <h3>🤖 Machine-to-Machine (M2M) Client Credentials Flow (RFC 6749)</h3>
+        </div>
+        <p class="hint">
+          Used by confidential backend services, microservices, and daemon jobs where no human user is in the loop.
+        </p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="m2mClientId">M2M Client ID:</label>
+            <input id="m2mClientId" type="text" [value]="m2mClientId()" (input)="m2mClientId.set($any($event.target).value)" class="input-text" />
+          </div>
+
+          <div class="form-group">
+            <label for="m2mSecret">M2M Client Secret:</label>
+            <input id="m2mSecret" type="password" [value]="m2mSecret()" (input)="m2mSecret.set($any($event.target).value)" class="input-text" />
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button type="button" class="btn-action" [disabled]="loading()" (click)="runM2MClientCredentialsFlow()">
+            🤖 Obtain M2M Machine Access Token
+          </button>
+        </div>
+
+        @if (m2mTokenResponse()) {
+          <div class="m2m-result">
+            <h4>M2M Token Response:</h4>
+            <div class="console-box success">
+              <pre>{{ m2mTokenResponse() | json }}</pre>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- TAB 6: OpenID Discovery Document -->
+    @if (activeTab() === 'discovery') {
+      <section class="card full-width">
+        <div class="card-header">
+          <h3>🌐 OpenID Connect Discovery (RFC 8414 / OIDC Core)</h3>
+          <button type="button" class="btn-action" (click)="loadDiscoveryDocument()">🔄 Reload Discovery</button>
+        </div>
+        <p class="hint">
+          Metadata published at <code>/.well-known/openid-configuration</code> allowing third-party API clients and SDKs to auto-configure themselves.
+        </p>
+
+        @if (discoveryDoc()) {
+          <div class="console-box">
+            <pre>{{ discoveryDoc() | json }}</pre>
+          </div>
+        } @else {
+          <div class="empty-state">Loading discovery metadata...</div>
+        }
+      </section>
+    }
+
+  </main>
+</div>

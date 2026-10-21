@@ -6,6 +6,7 @@ import { authGuard } from './guards/auth.guard';
 
 import { UserManagementComponent } from './components/user-management/user-management.component';
 import { PersonRegistrationComponent } from './components/person-registration/person-registration.component';
+import { OAuthCenterComponent } from './components/oauth/oauth-center.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -13,6 +14,8 @@ const routes: Routes = [
   { path: 'users', component: UserManagementComponent },
   { path: 'idempotent-form', component: PersonRegistrationComponent },
   { path: 'person-form', component: PersonRegistrationComponent },
+  { path: 'oauth', component: OAuthCenterComponent },
+  { path: 'oauth/callback', component: OAuthCenterComponent },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' }
 ];

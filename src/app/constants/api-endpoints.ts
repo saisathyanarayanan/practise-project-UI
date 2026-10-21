@@ -32,6 +32,14 @@ export const API_ENDPOINTS = {
     list: `${baseUrl}/api/person`,
     audit: `${baseUrl}/api/person/audit`,
     clear: `${baseUrl}/api/person/clear-test-data`
+  },
+  oauth: {
+    authorize: `${baseUrl}/api/oauth/authorize`,
+    token: `${baseUrl}/api/oauth/token`,
+    userinfo: `${baseUrl}/api/oauth/userinfo`,
+    revoke: `${baseUrl}/api/oauth/revoke`,
+    introspect: `${baseUrl}/api/oauth/introspect`,
+    discovery: `${baseUrl}/.well-known/openid-configuration`
   }
 } as const;
 
