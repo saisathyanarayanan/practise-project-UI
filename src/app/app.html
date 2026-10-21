@@ -1,20 +1,41 @@
-<!-- Global Session Expiry Warning Banner (Triggers when token has < 20s remaining) -->
+<!-- Global Session Expiry Warning Modal Popup (Triggers when token has <= 20s remaining) -->
 @if (authService.showExpiryWarning()) {
-  <aside class="expiry-warning-banner" role="alert" aria-live="assertive">
-    <div class="banner-content">
-      <div class="warning-text">
-        <span class="warning-icon">⚠️</span>
-        <span>
-          <strong>Your session will expire in {{ authService.tokenRemainingSeconds() }} seconds!</strong>
-          Click below to keep your work going without any interruption.
-        </span>
+  <div class="session-modal-backdrop">
+    <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-icon-wrapper">
+        <span class="modal-icon">⏳</span>
       </div>
-
-      <button type="button" class="btn-extend-session" (click)="extendSession()">
-        🔄 Keep My Session Active
-      </button>
+      <h3 id="modal-title" class="modal-title">Your Session is Expiring!</h3>
+      <p class="modal-message">
+        You will be automatically logged out in 
+        <span class="countdown-badge">{{ authService.tokenRemainingSeconds() }}s</span>.
+      </p>
+      <p class="modal-submessage">
+        Click below to extend your session and keep your work going without any interruption.
+      </p>
+      
+      <div class="modal-actions">
+        <button 
+          type="button" 
+          class="btn-extend" 
+          (click)="extendSession()" 
+          [disabled]="isRefreshing()">
+          @if (isRefreshing()) {
+            <span>🔄 Extending Session...</span>
+          } @else {
+            <span>✅ OK, Keep Me Logged In</span>
+          }
+        </button>
+        <button 
+          type="button" 
+          class="btn-logout" 
+          (click)="dismissAndLogout()" 
+          [disabled]="isRefreshing()">
+          Logout Now
+        </button>
+      </div>
     </div>
-  </aside>
+  </div>
 }
 
 <div class="app-layout">

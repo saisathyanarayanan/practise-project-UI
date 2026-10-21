@@ -6,72 +6,143 @@
   min-height: 100vh;
 }
 
-.expiry-warning-banner {
-  position: sticky;
+/* Modal Popup Backdrop Overlay */
+.session-modal-backdrop {
+  position: fixed;
   top: 0;
-  z-index: 9999;
-  background: linear-gradient(90deg, #f59e0b, #d97706);
-  color: #ffffff;
-  padding: 0.9rem 1.5rem;
-  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
-  animation: slideDown 0.3s ease-out;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  animation: fadeIn 0.25s ease-out;
+}
 
-  .banner-content {
-    max-width: 960px;
-    margin: 0 auto;
+/* Centered Modal Card */
+.session-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 440px;
+  padding: 2rem 1.75rem;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .modal-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.2rem;
+    border-radius: 50%;
+    background: #fef3c7;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
-    flex-wrap: wrap;
+    justify-content: center;
+
+    .modal-icon {
+      font-size: 2rem;
+    }
   }
 
-  .warning-text {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.95rem;
-
-    .warning-icon {
-      font-size: 1.3rem;
-    }
-
-    strong {
-      color: #fffbeb;
-      text-decoration: underline;
-    }
-  }
-
-  .btn-extend-session {
-    background: #ffffff;
-    color: #b45309;
-    border: none;
+  .modal-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    font-size: 0.9rem;
-    padding: 0.55rem 1.1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    transition: transform 0.15s, background-color 0.15s;
+    color: #0f172a;
+  }
 
-    &:hover {
-      background: #fef3c7;
-      transform: translateY(-1px);
+  .modal-message {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    color: #334155;
+
+    .countdown-badge {
+      display: inline-block;
+      background: #dc2626;
+      color: #ffffff;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      animation: pulse 1s infinite alternate;
+    }
+  }
+
+  .modal-submessage {
+    margin: 0 0 1.75rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.45;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+
+    button {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     }
 
-    &:active {
-      transform: translateY(0);
+    .btn-extend {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+
+      &:hover:not(:disabled) {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
+    }
+
+    .btn-logout {
+      background: #f1f5f9;
+      color: #475569;
+
+      &:hover:not(:disabled) {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
     }
   }
 }
 
-@keyframes slideDown {
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
   from {
-    transform: translateY(-100%);
+    transform: scale(0.92);
+    opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: scale(1);
+    opacity: 1;
   }
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
 }
 
 .app-layout {
