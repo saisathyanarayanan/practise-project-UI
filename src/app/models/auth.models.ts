@@ -16,3 +16,13 @@ export interface DecodedToken {
   exp?: number;
   [key: string]: any;
 }
+
+export interface GoogleLoginResponse {
+  token: string;
+  userId: number;
+  username: string;
+  email: string;
+  role: string;
+  isNewUser: boolean;
+  message: string;
+}

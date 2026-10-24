@@ -48,6 +48,19 @@
       </button>
     </form>
 
+    <div class="auth-divider">
+      <span>OR</span>
+    </div>
+
+    <div class="google-login-container">
+      @if (isOffline()) {
+        <div class="offline-badge">
+          📶 Google Sign-In is unavailable while offline
+        </div>
+      }
+      <div id="googleSignInBtn" class="google-btn-slot" [style.display]="isOffline() ? 'none' : 'flex'"></div>
+    </div>
+
     <div class="test-users-section">
       <span class="hint-label">Quick Test Logins (from DB):</span>
       <div class="user-chips">

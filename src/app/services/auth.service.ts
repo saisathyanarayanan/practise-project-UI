@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
-import { AuthResponse, DecodedToken, LoginRequest } from '../models/auth.models';
+import { AuthResponse, DecodedToken, LoginRequest, GoogleLoginResponse } from '../models/auth.models';
 import { StorageService } from './storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -39,6 +39,17 @@ export class AuthService {
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(API_ENDPOINTS.auth.login, credentials).pipe(
+      tap((response) => {
+        this.handleAuthenticationSuccess(response.token);
+      })
+    );
+  }
+
+  /**
+   * Login or Auto Sign-up with Google ID Token
+   */
+  loginWithGoogle(idToken: string): Observable<GoogleLoginResponse> {
+    return this.http.post<GoogleLoginResponse>(API_ENDPOINTS.auth.googleLogin, { idToken }).pipe(
       tap((response) => {
         this.handleAuthenticationSuccess(response.token);
       })

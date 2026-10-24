@@ -18,7 +18,8 @@ export const API_ENDPOINTS = {
   },
   auth: {
     login:   `${baseUrl}/api/auth/login`,
-    refresh: `${baseUrl}/api/auth/refresh`
+    refresh: `${baseUrl}/api/auth/refresh`,
+    googleLogin: `${baseUrl}/api/auth/google-login`
   },
   userManagement: {
     hashedCreate: `${baseUrl}/api/usermanagement/hashed`,
